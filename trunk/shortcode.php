@@ -492,17 +492,29 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 				<div class="ctctcf7_subscribe_list" style="display:none;">
 					<ul class="clear">
 					<?php
-					$lists = CTCT_SuperClass::getAvailableLists();
+            $CC_API = new CTCT_API_Wrapper();
+  					$lists = $CC_API->getLists();
 
-					foreach($lists as $list) {
-						echo '
-						<li>
-							<label for="wpcf7-ctct-list-'.$list['id'].'">
-								<input type="checkbox" class="option" name="\''.str_replace("'", '&amp;#39;', $list['name']).'::#'.$list['id'].'\'" id="wpcf7-ctct-list-'.$list['id'].'" value="'.$list['link'].'" '.@checked((is_array($list) && in_array($list['link'], (array)$cf7_ctct['lists'])), true, false).' />
-							'.$list['name'].'
-							</label>
-						</li>';
-					}
+            print_r((array)$cf7_ctct['lists']);
+
+  					foreach ($lists as $list) {
+              $listId = $list->id;
+              $listName = $list->name;
+              $listValue = $list->id;
+
+              $htmlListName = str_replace("'", '&amp;#39;', $listName);
+
+  						$htmlCheckbox = array(
+                '<li>',
+    							'<label for="wpcf7-ctct-list-' . $listId . '">',
+    								'<input type="checkbox" class="option" name="\''. $htmlListName . '::#' . $listId . '\'" id="wpcf7-ctct-list-' . $listId . '" value="' . $listValue . '" ' . @checked((is_array($list) && in_array($listValue, (array)$cf7_ctct['lists'])), true, false) . ' />',
+      							'&nbsp;' . $listName,
+    							'</label>',
+    						'</li>'
+              );
+
+              echo join('', $htmlCheckbox);
+  					}
 					?>
 					</ul>
 					<p class="alignright"><a href="<?php echo add_query_arg(array('cache' => rand(1,20000))); ?>"><?php _e('Refresh Lists', 'ctctcf7'); ?></a></p>
