@@ -24,11 +24,10 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 	 * @return array Array of shortcodes
 	 */
 	function ajax_generate_dropdowns_from_code() {
-		global $wpcf7_shortcode_manager;
 
 		check_ajax_referer('ctctcf7_generate_dropdowns','ctctcf7_generate_dropdowns');
 
-		$WPCF7_ShortcodeManager = new WPCF7_ShortcodeManager;
+		$wpcf7_shortcode_manager = WPCF7_ShortcodeManager::get_instance();
 
 		// Form code to scan
 		$code = stripslashes_deep( @$_REQUEST['data'] );
@@ -38,8 +37,11 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 		$output = array(
 			'' => __('Select a Field')
 		);
-		if(!empty($wpcf7_shortcode_manager->scanned_tags)) {
-			foreach ( $wpcf7_shortcode_manager->scanned_tags as $fe ) {
+
+    $scanned_tags = $wpcf7_shortcode_manager->get_scanned_tags();
+
+		if(!empty($scanned_tags)) {
+			foreach ( $scanned_tags as $fe ) {
 				if ( empty( $fe['name'] ) )
 					continue;
 
@@ -90,12 +92,6 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 
 				$username = self::get_username();
 				if(!empty($lists)) {
-
-					// Lists that are posted are ONLY the IDs, not the path.
-					// we convert that to the path now.
-					foreach ($lists as &$list) {
-						$list = sprintf('/ws/customers/%s/lists/%d', $username, $list);
-					}
 
 					$cf7_ctct['lists'] = $lists;
 
@@ -167,7 +163,6 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 	 */
 	static function outputHTML($atts = array()) {
 
-
 		$settings = wp_parse_args($atts, array(
 			'type' => 'checkboxes',
 			'format' => '<span>%%name%%</span>', // Choose HTML format for each item
@@ -182,8 +177,10 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 		extract($settings);
 
 		switch($type) {
+      case 'opt-in':
+        $before = '<input name="ctctcf7_lists" type="hidden" value="signup" />';
 			case 'hidden':
-				$before = '<div>';
+				$before = '<div>' . $before;
 				$after = '</div>';
 				$before_item = $after_item = '';
 				$format = '<input type="hidden" value="%%id%%" name="%%name_attr%%[]" />';
@@ -494,8 +491,6 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 					<?php
             $CC_API = new CTCT_API_Wrapper();
   					$lists = $CC_API->getLists();
-
-            print_r((array)$cf7_ctct['lists']);
 
   					foreach ($lists as $list) {
               $listId = $list->id;

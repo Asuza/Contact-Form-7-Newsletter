@@ -50,7 +50,7 @@ class CTCTCF7 {
 		add_filter('plugin_action_links', array('CTCTCF7', 'plugins_action_links'), 10, 2 );
 		add_action('admin_menu', array('CTCTCF7', 'admin_menu'));
 		add_action('wpcf7_after_save', array('CTCTCF7', 'save_form_settings'));
-		add_action('wpcf7_admin_before_subsubsub', array('CTCTCF7', 'add_meta_box' ));
+		add_action('wpcf7_admin_notices', array('CTCTCF7', 'add_meta_box' ));
 		add_action('wpcf7_admin_after_form', array('CTCTCF7', 'show_ctct_metabox' ));
 
 		// Add icon to activated form list
@@ -539,10 +539,17 @@ class CTCTCF7 {
 	}
 
 	static function metabox($args) {
-
 		$API = new CTCT_API_Wrapper;
 		$cf7_ctct_defaults = array();
 		$cf7_ctct = get_option( 'cf7_ctct_'.$args->id, $cf7_ctct_defaults );
+
+    if (!$cf7_ctct) {
+      $cf7_ctct = array();
+    }
+
+    if (!isset($cf7_ctct['lists'])) {
+      $cf7_ctct['lists'] = array();
+    }
 	?>
 	<script>
 		jQuery(document).ready(function($) {
@@ -553,16 +560,17 @@ class CTCTCF7 {
 		    });
 		});
 	</script>
-	<div class="ctctcf7-tooltip" title="<h6><?php _e('Backward Compatibility', 'ctctcf7'); ?></h6><p><?php _e('Starting with Version 2.0 of Contact Form 7 Newsletter plugin, the lists a form sends data to should be defined by generating a tag above &uarr;</p><p>For backward compatibility, <strong>if you don\'t define any forms using a tag above</strong>, your form will continue to send contact data to these lists:', 'ctctcf7'); ?></p><ul class='ul-disc'>
-		<?php
-		$lists = $API->getLists();
-		foreach($lists as $list) {
-			if(!in_array($list['link'], (array)$cf7_ctct['lists'])) { continue; }
-			echo '<li>'.$list['name'].'</li>';
-		}
-		?></ul><p><strong>For full instructions, go to the Contact > Constant Contact page and click 'View integration instructions'.</strong></p>"><?php _e('Where are my lists?', 'ctctcf7'); ?></div>
 
-	<a href="http://katz.si/4w"><img src="<?php echo plugins_url('CTCT_horizontal_logo.png', __FILE__); ?>" width="281" height="47" alt="Constant Contact Logo" style="margin-top:.5em;" /></a>
+  <div class="ctctcf7-tooltip" title="<h6><?php _e('Backward Compatibility', 'ctctcf7'); ?></h6><p><?php _e('Starting with Version 2.0 of Contact Form 7 Newsletter plugin, the lists a form sends data to should be defined by generating a tag above &uarr;</p><p>For backward compatibility, <strong>if you don\'t define any forms using a tag above</strong>, your form will continue to send contact data to these lists:', 'ctctcf7'); ?></p><ul class='ul-disc'>
+  <?php
+    $API = new CTCT_API_Wrapper();
+    $lists = $API->getLists();
+    foreach($lists as $list) {
+    if(!in_array($list->id, (array)$cf7_ctct['lists'])) { continue; }
+    echo '<li>'.$list->name.'</li>';
+    }
+  ?></ul><p><strong>For full instructions, go to the Contact > Constant Contact page and click 'View integration instructions'.</strong></p>"><?php _e('Where are my lists?', 'ctctcf7'); ?></div>
+  <a href="http://katz.si/4w"><img src="<?php echo plugins_url('CTCT_horizontal_logo.png', __FILE__); ?>" width="281" height="47" alt="Constant Contact Logo" style="margin-top:.5em;" /></a>
 
 <?php if(self::validateApi()) { ?>
 <div class="mail-field clear" style="padding-bottom:.75em">
@@ -684,17 +692,19 @@ class CTCTCF7 {
 			$actionBy = 'ACTION_BY_OWNER';
 		}
 
-    error_log(print_r($cf7_ctct, true));
-
 		// Create a new contact.
 		if (!$existingContact) {
 			$contact = $API->createContact($contactData);
+
+      $contact->addEmail($contactData['email_address']);
 
 			foreach ((array)$cf7_ctct['lists'] as $list) {
 				$contact->addList($list);
 			}
 
-			$newContact = $API->addContact($contact, array(
+      $API->updateContactDetails($contact, $contactData);
+
+      $newContact = $API->addContact($contact, array(
         'action_by' => $actionBy
       ));
 
@@ -703,7 +713,7 @@ class CTCTCF7 {
       }
 		}	else {
 			// Update the existing contact with the new data
-			self::mergeContactDetails($contactData, $existingContact);
+			$API->updateContactDetails($existingContact, $contactData);
 
 			// Update Lists
 			$lists = $existingContact->lists;
@@ -724,27 +734,6 @@ class CTCTCF7 {
 		}
 
 		return $obj;
-	}
-
-  static public function setIfEmpty (&$var, $defaultValue) {
-    if (empty($var)) {
-      $var = $defaultValue;
-    }
-  }
-
-	static public function mergeContactDetails ($contact, &$existingContact)
-  {
-    self::setIfEmpty($existingContact->first_name, $contact['first_name']);
-    self::setIfEmpty($existingContact->middle_name, $contact['middle_name']);
-    self::setIfEmpty($existingContact->last_name, $contact['last_name']);
-    self::setIfEmpty($existingContact->source, $contact['source']);
-    self::setIfEmpty($existingContact->prefix_name, $contact['prefix_name']);
-    self::setIfEmpty($existingContact->job_title, $contact['job_title']);
-    self::setIfEmpty($existingContact->company_name, $contact['company_name']);
-    self::setIfEmpty($existingContact->home_phone, $contact['home_phone']);
-    self::setIfEmpty($existingContact->work_phone, $contact['work_phone']);
-    self::setIfEmpty($existingContact->cell_phone, $contact['cell_phone']);
-    self::setIfEmpty($existingContact->fax, $contact['fax']);
 	}
 
 	static public function process_contact($contact = array()) {
