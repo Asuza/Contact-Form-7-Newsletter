@@ -129,6 +129,20 @@ class CTCT_API_Wrapper
       'sub_postal_code' => $contactData['sub_postal_code'],
     ));
 
+    $CustomField = new CustomField();
+    $cfPrefix = 'CustomField';
+
+    foreach ($contactData as $key => $value) {
+      if (stripos($key, $cfPrefix) !== false) {
+        $cf = $CustomField->create(array(
+          'name' => $key,
+          'value' => $value
+        ));
+
+        $Contact->addCustomField($cf);
+      }
+    }
+
     $Contact->addAddress($newAddress);
 
     return true;
@@ -156,10 +170,21 @@ class CTCT_API_Wrapper
       array('tag'=>'postal_code',  'req' => false, 'name' => "Postal Code"),
       array('tag'=>'sub_postal_code', 'req' => false, 'name' => "Sub Postal Code"),
       array('tag'=>'notes', 'req' => false, 'name' => "Note"),
-      array('tag'=>'custom_field_birthday_month','req' => false, 'name' => "Birthday (Month)"),
-      array('tag'=>'custom_field_birthday_date','req' => false, 'name' => "Birthday (Date)"),
-      array('tag'=>'custom_field_anniversary_month', 'req' => false, 'name' => "Anniversary (Month)"),
-      array('tag'=>'custom_field_anniversary_date', 'req' => false, 'name' => "Anniversary (Date)"),
+      array('tag'=>'CustomField1', 'req' => false, 'name' => "Custom Field 1"),
+      array('tag'=>'CustomField2', 'req' => false, 'name' => "Custom Field 2"),
+      array('tag'=>'CustomField3', 'req' => false, 'name' => "Custom Field 3"),
+      array('tag'=>'CustomField4', 'req' => false, 'name' => "Custom Field 4"),
+      array('tag'=>'CustomField5', 'req' => false, 'name' => "Custom Field 5"),
+      array('tag'=>'CustomField6', 'req' => false, 'name' => "Custom Field 6"),
+      array('tag'=>'CustomField7', 'req' => false, 'name' => "Custom Field 7"),
+      array('tag'=>'CustomField8', 'req' => false, 'name' => "Custom Field 8"),
+      array('tag'=>'CustomField9', 'req' => false, 'name' => "Custom Field 9"),
+      array('tag'=>'CustomField10', 'req' => false, 'name' => "Custom Field 10"),
+      array('tag'=>'CustomField11', 'req' => false, 'name' => "Custom Field 11"),
+      array('tag'=>'CustomField12', 'req' => false, 'name' => "Custom Field 12"),
+      array('tag'=>'CustomField13', 'req' => false, 'name' => "Custom Field 13"),
+      array('tag'=>'CustomField14', 'req' => false, 'name' => "Custom Field 14"),
+      array('tag'=>'CustomField15', 'req' => false, 'name' => "Custom Field 15"),
     );
   }
 }
