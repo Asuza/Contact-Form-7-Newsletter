@@ -5,11 +5,10 @@ Plugin URI: https://github.com/Asuza/Contact-Form-7-Newsletter
 Description: Add the power of Constant Contact to Contact Form 7
 Author: Asuza
 Author URI: https://github.com/Asuza
-Version: 2.1.0
+Version: 3.0.0
 */
 
-/*  Copyright 2013 Katz Web Services, Inc. (email: info@katzwebservices.com)
-
+/*  
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -36,13 +35,9 @@ class CTCTCF7 {
 	 * The current version of the plugin.
 	 * @var string
 	 */
-	private static $version = '2.1.0';
+	private static $version = '3.0.0';
 
 	function __construct() {
-
-		// Upgrade messages
-		add_action('admin_notices', array('CTCTCF7', 'updated_message'));
-		add_action('admin_init', array('CTCTCF7', 'hide_updated_message'));
 
 		add_action('admin_init', array('CTCTCF7', 'settings_init'));
 		add_action('admin_head', array('CTCTCF7', 'admin_head'));
@@ -89,87 +84,6 @@ class CTCTCF7 {
 			update_option('ctct_cf7_version', $version);
 		} else {
 			delete_option('ctct_cf7_updated');
-		}
-	}
-
-	/**
-	 * Hide updated messages for users when the click the hide button.
-	 *
-	 * Fake AJAX. No security really needed...
-	 */
-	static function hide_updated_message() {
-		if(isset($_REQUEST['hide-cf7-update']) && current_user_can( 'manage_options' )) {
-			$deleted = delete_option('ctct_cf7_updated');
-
-			// If processing using ajax, we can exit immediately.
-			if(isset($_REQUEST['ajax'])) { die(floatval($deleted)); }
-
-			// Otherwise, it's a plain link, and keep loading.
-			return;
-		}
-	}
-	/**
-	 * If the settings show that the plugin has been updated,
-	 * then show an updated message.
-	 *
-	 */
-	static function updated_message() {
-		if($previous_version = get_option( 'ctct_cf7_updated' )) {
-
-			// If this upgrade is from V1 to V2
-			$version1update = version_compare( $previous_version, '2.0', '<');
-			if($version1update) {
-				echo '<style>.wrap .updated #message { display: none; }</style>';
-				echo '<div class="wrap" style="max-width:800px;"><div class="updated inline">';
-				echo wpautop(sprintf(__('<h2>You need to update your existing Contact Form 7 Newsletter form configurations.</h2>
-
-					<h3><a href="%s" target="_blank">Read detailed form integration instructions</a>.</h3>
-
-					The Contact Form 7 Newsletter plugin has made significant changes. While your existing configurations should still work, <strong>you should make sure that the integrations are still configured properly</strong>.
-
-					The forms with the <img src="%s" width="16" height="16" alt="" /> icon next to their name are the forms with Constant Contact integration enabled.
-
-					<a class="button-primary button" href="%s">Go to Contact Form 7</a><a class="button-secondary button alignright" id="hide-cf7-update" href="%s">Got it, hide this 	message.</a>
-					'),
-					plugins_url( 'help/howto.html#step_10', __FILE__ ),
-					plugins_url('favicon.png',__FILE__),
-					admin_url( 'admin.php?page=wpcf7' ),
-					add_query_arg(array('hide-cf7-update' => true) ))
-				);
-
-				echo '</div></div>';
-			}
-
-			// Placeholder for future messages.
-			switch ($previous_version) {
-        case '2.0.4':
-				case '2.0.3':
-				case '2.0.2':
-					break;
-			}
-
-?>
-			<script>
-				jQuery(document).ready(function($) {
-					$('.cf7com-links').hide();
-					/**
-					 * When the hide button is clicked, process it with AJAX
-					 * @see CTCTCF7::hide_updated_message()
-					 */
-					$('#hide-cf7-update').click(function(e) {
-						e.preventDefault();
-						var $that = $(this);
-						$that.parents('.wrap').css({'cursor': 'wait'});
-						$.ajax($(this).attr('href')+'&ajax=true')
-							// If it works, hide the DIV
-							.done(function(data) { $that.parents('.wrap').slideUp(); })
-							// If it fails to load using AJAX, redirect to the page
-							// to hide it manually
-							.fail(function() { window.location = $that.attr('href'); });
-					});
-				});
-			</script>
-			<?php
 		}
 	}
 
@@ -339,9 +253,13 @@ class CTCTCF7 {
 	}
 
 	static function getConfig($name) {
-		if(isset($_POST['ctct_cf7'])) { return $_POST['ctct_cf7'][$name]; }
+		if (isset($_POST['ctct_cf7'])) {
+      return $_POST['ctct_cf7'][$name];
+    }
+
 		$settings = get_option('ctct_cf7');
-		$value = !empty($settings[$name]) ? $settings[$name] : NULL;
+		$value = !empty($settings[$name]) ? $settings[$name] : null;
+
 		return $value;
 	}
 
@@ -455,57 +373,6 @@ class CTCTCF7 {
 	<?php
 	}
 
-	function show_signup_message() {
-		?>
-		<style type="text/css">
-		.get-em,
-		#grow-with-email,
-		a#free_trial {
-			display:block;
-			text-indent:-9999px;
-			overflow:hidden;
-			float:left;
-		}
-		a#free_trial:hover {
-			background-position: 0px -102px;
-		}
-		#grow-with-email {
-			background-image: url(http://img.constantcontact.com/lp/images/standard/bv2/product_pages/test/grow_with_email_text.png);
-		}
-		#grow-with-email,
-		#grow-with-email a {
-			display: block;
-			border: none;
-			outline: none;
-			height: 91px;
-			width: 720px;
-		}
-		.get-em {
-			float: left;
-			clear: left;
-			width: 201px;
-			height: 81px;
-			background: url('http://img.constantcontact.com/lp/images/standard/bv2/product_pages/test/btn_get_email_white.png') left top no-repeat;
-		}
-		.get-em:hover { background-position: left bottom; }
-		.learn-more { margin-left: 15px!important; }
-		#enter-account-details {
-			width:100%; border-top:1px solid #ccc; margin-top:1em; padding-top:.5em;
-		}
-	</style>
-	<div style="clear:left; float:left;">
-		<h2 class="clear" style="font-size:23px; color: #555;"><strong>Hello!</strong> This plugin requires <a href="http://katz.si/4i" title="Learn more about Constant Contact">a Constant Contact account</a>.</h2>
-		<p id="grow-with-email"><a href="http://katz.si/4i"><strong>Grow with Email Marketing. Guaranteed.</strong> With Email Marketing, it's easy for you to connect with your customers, and for customers to share your message with their networks. And the more customers spread the word about your business, the more you grow</a></p>
-		<p><a class="get-em" href="http://katz.si/4w">Start Your Free Trial</a></p>
-		<h2 class="learn-more alignleft"> or <a href="http://katz.si/4i">Learn More</a></h2>
-		<div class="clear"></div>
-	</div>
-
-	<h2 class="clear" id="enter-account-details"><?php _e('Enter your account details below:', 'ctctcf7'); ?></h2>
-	<?php
-		echo wpautop(sprintf(__('<h3>%sView integration instructions%s.</h3>', 'ctctcf7'), '<a href="'.plugins_url( 'help/howto.html', __FILE__ ).'" target="_blank">', '</a>'));
-	}
-
 	static function save_form_settings($args) {
 		update_option( 'cf7_ctct_'.$args->id, $_POST['wpcf7-ctct'] );
 	}
@@ -557,7 +424,7 @@ class CTCTCF7 {
     echo '<li>'.$list->name.'</li>';
     }
   ?></ul><p><strong>For full instructions, go to the Contact > Constant Contact page and click 'View integration instructions'.</strong></p>"><?php _e('Where are my lists?', 'ctctcf7'); ?></div>
-  <a href="http://katz.si/4w"><img src="<?php echo plugins_url('CTCT_horizontal_logo.png', __FILE__); ?>" width="281" height="47" alt="Constant Contact Logo" style="margin-top:.5em;" /></a>
+  <img src="<?php echo plugins_url('CTCT_horizontal_logo.png', __FILE__); ?>" width="281" height="47" alt="Constant Contact Logo" style="margin-top:.5em;" />
 
 <?php if(self::validateApi()) { ?>
 <div class="mail-field clear" style="padding-bottom:.75em">
@@ -606,7 +473,10 @@ class CTCTCF7 {
 			</div>
 
 		<?php
-			if($i % 2 === 1) { echo '<div class="clear"></div>'; }
+			if ($i % 2 === 1) {
+        echo '<div class="clear"></div>';
+      }
+
 			$i++;
 		 } ?>
 
@@ -623,7 +493,6 @@ class CTCTCF7 {
 </div>
 <?php
 	}
-
 
 	static function process_submission($obj) {
 
