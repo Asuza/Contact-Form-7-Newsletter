@@ -381,7 +381,7 @@ class CTCTCF7 {
     $API = self::getAPIWrapper();
 
 		// echo __('You may obtain an API Key by signing up for a <a href="https://constantcontact.mashery.com/">Constant Contact Mashery Account</a>.', 'ctctcf7');
-    echo __('To get your Access Token, please follow <a href="' . $API->getAccessTokenUri() . '">this link</a> using the Constant Contact account ' .
+    echo __('To get your Access Token, please follow <a target="_blank" href="' . $API->getAccessTokenUri() . '">this link</a> using the Constant Contact account ' .
       'that you want to use with this plugin.<br>You will have to grant access to your account for this plugin, after which you will receive an Access Token.<br>' .
       'Copy that token and paste it in the Access Token box below.', 'ctctcf7');
 	}
