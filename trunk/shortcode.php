@@ -489,7 +489,7 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 				<div class="ctctcf7_subscribe_list" style="display:none;">
 					<ul class="clear">
 					<?php
-            $CC_API = new CTCT_API_Wrapper();
+            $CC_API = self::getAPIWrapper();
   					$lists = $CC_API->getLists();
 
   					foreach ($lists as $list) {
