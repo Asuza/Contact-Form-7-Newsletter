@@ -338,17 +338,10 @@ class CTCTCF7 {
 		return true;
 	}
 
-	static function get_password() {
-		if(isset($_POST['ctct_cf7'])) { return $_POST['ctct_cf7']['password']; }
+	static function getConfig($name) {
+		if(isset($_POST['ctct_cf7'])) { return $_POST['ctct_cf7'][$name]; }
 		$settings = get_option('ctct_cf7');
-		$value = !empty($settings['password']) ? $settings['password'] : NULL;
-		return $value;
-	}
-
-	static function get_username() {
-		if(isset($_POST['ctct_cf7'])) { return $_POST['ctct_cf7']['username']; }
-		$settings = get_option('ctct_cf7');
-		$value = !empty($settings['username']) ? $settings['username'] : NULL;
+		$value = !empty($settings[$name]) ? $settings[$name] : NULL;
 		return $value;
 	}
 
@@ -368,33 +361,42 @@ class CTCTCF7 {
 			array('CTCTCF7', 'setting_description'),
 			'ctct_cf7'
 		);
+		// add_settings_field(
+		// 	'ctct_cf7_api_key',
+		// 	__('Constant Contact API Key'),
+		// 	array('CTCTCF7', 'setting_input_api_key'),
+		// 	'ctct_cf7',
+		// 	'ctct_api'
+		// );
 		add_settings_field(
-			'ctct_cf7_username',
-			__('Constant Contact Username'),
-			array('CTCTCF7', 'setting_input_username'),
-			'ctct_cf7',
-			'ctct_api'
-		);
-		add_settings_field(
-			'ctct_cf7_password',
-			__('Constant Contact Password'),
-			array('CTCTCF7', 'setting_input_password'),
+			'ctct_cf7_access_token',
+			__('Constant Contact Access Token'),
+			array('CTCTCF7', 'setting_input_access_token'),
 			'ctct_cf7',
 			'ctct_api'
 		);
 	}
 
 	static function setting_description() {
-		echo __('Enter the username and password you use to log in to Constant Contact.', 'ctctcf7');
+    $API = self::getAPIWrapper();
+
+		// echo __('You may obtain an API Key by signing up for a <a href="https://constantcontact.mashery.com/">Constant Contact Mashery Account</a>.', 'ctctcf7');
+    echo __('To get your Access Token, please follow <a href="' . $API->getAccessTokenUri() . '">this link</a> using the Constant Contact account ' .
+      'that you want to use with this plugin.<br>You will have to grant access to your account for this plugin, after which you will receive an Access Token.<br>' .
+      'Copy that token and paste it in the Access Token box below.', 'ctctcf7');
 	}
 
-	static function setting_input_username() {
-		echo '<input autocomplete="off" name="ctct_cf7[username]" id="ctct_cf7_username" type="text" value="'.self::get_username().'" class="text" />';
+	static function setting_input_api_key () {
+		echo '<input autocomplete="off" name="ctct_cf7[api_key]" id="ctct_cf7_api_key" type="text" value="' . self::getConfig('api_key') . '" class="text" />';
 	}
 
-	static function setting_input_password() {
-		echo '<input autocomplete="off" name="ctct_cf7[password]" id="ctct_cf7_password" type="password" value="'.self::get_password().'" class="password" />';
+	static function setting_input_access_token() {
+		echo '<input autocomplete="off" name="ctct_cf7[access_token]" id="ctct_cf7_access_token" type="text" value="' . self::getConfig('access_token') . '" class="text" />';
 	}
+
+  static function getAPIWrapper() {
+    return new CTCT_API_Wrapper(self::getConfig('access_token'));
+  }
 
 	/**
 	 * Check the status of a plugin.
@@ -420,18 +422,13 @@ class CTCTCF7 {
 
 	static function settings_page() {
 		wp_enqueue_style( 'thickbox' );
-		@include_once(plugin_dir_path(__FILE__).'kwsratingbox.php');
 ?>
 	<div class="wrap">
-		<?php kws_show_rating_box('Contact Form 7 - Constant Contact Module', 'contact-form-7-newsletter', self::get_version()); ?>
-
-		<a href="http://katz.si/4w"><img src="<?php echo plugins_url('CTCT_horizontal_logo.png', __FILE__); ?>" width="281" height="47" alt="Constant Contact" style="margin-top:1em;" /></a>
+		<img src="<?php echo plugins_url('CTCT_horizontal_logo.png', __FILE__); ?>" width="281" height="47" alt="Constant Contact" style="margin-top:1em;" />
 		<h2 style="padding-top:0;margin-bottom:.5em;"><?php _e('Contact Form 7 Module', 'ctctcf7'); ?></h2>
 
 		<form action="options.php" method="post">
 			<?php
-				$valid = self::validateApi();
-
 				$message = '';
 				$status = self::get_plugin_status('contact-form-7/wp-contact-form-7.php');
 				switch($status) {
@@ -444,20 +441,10 @@ class CTCTCF7 {
 					echo sprintf("<div id='message' class='error'><p>%s</p></div>", $message);
 				}
 
-				if(is_null(self::get_password()) && is_null(self::get_username())) {
-					self::show_signup_message();
-				} elseif($valid) {
-					echo wpautop(sprintf(__('<h3>Now you can integrate with a Contact Form 7 form. %sView integration instructions%s.</h3>', 'ctctcf7'), '<a href="'.plugins_url( 'help/howto.html', __FILE__ ).'" target="_blank">', '</a>'));
-
-					echo "<div id='message' class='updated inline alignleft'><p>".__('Your username and password seem to be working.', 'ctctcf7')."</p></div>";
-
-				} elseif(is_null(self::get_password())) {
-					echo "<div id='message' class='error alignleft'><p>".__('Your password is empty.', 'ctctcf7')."</p></div>";
-				} elseif(is_null(self::get_username())) {
-					echo "<div id='message' class='error alignleft'><p>".__('Your username is empty.', 'ctctcf7')."</p></div>";
-				} else {
-					echo "<div id='message' class='error alignleft'><p>".__('Your username and password are not configured properly.', 'ctctcf7')."</p></div>";
+				if(is_null(self::getConfig('access_token'))) {
+					echo "<div id='message' class='error alignleft'><p>".__('Your access token is empty.', 'ctctcf7')."</p></div>";
 				}
+
 				echo '<div class="clear"></div>';
 				settings_fields('ctct_cf7');
 				do_settings_sections('ctct_cf7');
@@ -539,7 +526,7 @@ class CTCTCF7 {
 	}
 
 	static function metabox($args) {
-		$API = new CTCT_API_Wrapper;
+		$API = self::getAPIWrapper();
 		$cf7_ctct_defaults = array();
 		$cf7_ctct = get_option( 'cf7_ctct_'.$args->id, $cf7_ctct_defaults );
 
@@ -563,7 +550,7 @@ class CTCTCF7 {
 
   <div class="ctctcf7-tooltip" title="<h6><?php _e('Backward Compatibility', 'ctctcf7'); ?></h6><p><?php _e('Starting with Version 2.0 of Contact Form 7 Newsletter plugin, the lists a form sends data to should be defined by generating a tag above &uarr;</p><p>For backward compatibility, <strong>if you don\'t define any forms using a tag above</strong>, your form will continue to send contact data to these lists:', 'ctctcf7'); ?></p><ul class='ul-disc'>
   <?php
-    $API = new CTCT_API_Wrapper();
+    $API = self::getAPIWrapper();
     $lists = $API->getLists();
     foreach($lists as $list) {
     if(!in_array($list->id, (array)$cf7_ctct['lists'])) { continue; }
@@ -674,7 +661,7 @@ class CTCTCF7 {
 			return $obj;
 		}
 
-		$API = new CTCT_API_Wrapper;
+		$API = self::getAPIWrapper();
 
 		$existingContact = $API->getContactByEmail($contactData['email_address']);
 

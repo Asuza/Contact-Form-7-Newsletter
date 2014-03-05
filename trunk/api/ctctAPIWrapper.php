@@ -17,12 +17,12 @@ class CTCT_API_Wrapper
 
   private $accessToken;
 
-  public function __construct()
+  public function __construct($token)
   {
-    $this->apiKey = 'w32repp6td33pyq86kysa8nd';
+    $this->apiKey = 'g4jqyr3swnt6m4nnxqqme7bv';
     $this->apiPath = $this->getCurrentUri();
 
-    $this->accessToken = 'e4960684-acc1-4cc4-9245-81c7039a393c';
+    $this->accessToken = $token;
   }
 
   public function getApiKey ()
