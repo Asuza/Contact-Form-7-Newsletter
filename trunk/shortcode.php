@@ -175,6 +175,8 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 
 		extract($settings);
 
+    $before = "";
+
 		switch($type) {
       case 'opt-in':
         $before = '<input name="ctctcf7_lists" type="hidden" value="signup" />';
