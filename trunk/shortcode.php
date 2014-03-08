@@ -90,7 +90,6 @@ class CTCTCF7_Shortcode extends CTCTCF7 {
 			if($value['basetype'] === 'ctct') {
 				$lists = isset($obj->posted_data[$value['name']]) ? (array)$obj->posted_data[$value['name']] : false;
 
-				$username = self::get_username();
 				if(!empty($lists)) {
 
 					$cf7_ctct['lists'] = $lists;
