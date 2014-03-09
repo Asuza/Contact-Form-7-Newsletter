@@ -559,14 +559,6 @@ class CTCTCF7 {
 			}
 
       $API->updateContactDetails($contact, $contactData);
-
-      $newContact = $API->addContact($contact, array(
-        'action_by' => $actionBy
-      ));
-
-      if (gettype($newContact) === "object") {
-        $existingContact = $newContact;
-      }
 		}	else {
 			// Update the existing contact with the new data
 			$API->updateContactDetails($existingContact, $contactData);
@@ -577,17 +569,29 @@ class CTCTCF7 {
 			foreach ((array)$cf7_ctct['lists'] as $list) {
 				$existingContact->addList($list);
       }
-
-			$existingContact = $API->updateContact($existingContact, array(
-        'action_by' => $actionBy
-      ));
 		}
 
-		if (gettype($response) === "array") {
-			do_action('cf7_ctct_failed', $response, $contactData, $existingContact);
-		} else {
-			do_action('cf7_ctct_succeeded', $response, $contactData, $existingContact);
-		}
+    try {
+      if (!$existingContact) {
+        $API->addContact($contact, array(
+          'action_by' => $actionBy
+        ));
+      } else {
+        $API->updateContact($existingContact, array(
+          'action_by' => $actionBy
+        ));
+
+        do_action('cf7_ctct_succeeded', "success", $contactData, $existingContact);
+      }
+    } catch (Exception $e) {
+      $errorMessages = print_r($e->getErrors(), true);
+
+      if (WP_DEBUG === true) {
+        error_log($errorMessages);
+      }
+
+      do_action('cf7_ctct_failed', "failure", $contactData, $existingContact);
+    }
 
 		return $obj;
 	}
