@@ -93,9 +93,9 @@ class CTCT_API_Wrapper
     return $Contacts->updateContact($this->getAccessToken() , $contact, $options);
   }
 
-  static public function setIfEmpty (&$var, $defaultValue) {
-    if (empty($var)) {
-      $var = $defaultValue;
+  static public function setIfEmpty (&$object, $hash, $key) {
+    if (empty($object->$key) && isset($hash[$key])) {
+      $object->$key = $hash[$key];
     }
   }
 
@@ -105,29 +105,27 @@ class CTCT_API_Wrapper
       return false;
     }
 
-    self::setIfEmpty($Contact->first_name, $contactData['first_name']);
-    self::setIfEmpty($Contact->middle_name, $contactData['middle_name']);
-    self::setIfEmpty($Contact->last_name, $contactData['last_name']);
-    self::setIfEmpty($Contact->prefix_name, $contactData['prefix_name']);
-    self::setIfEmpty($Contact->job_title, $contactData['job_title']);
-    self::setIfEmpty($Contact->company_name, $contactData['company_name']);
-    self::setIfEmpty($Contact->home_phone, $contactData['home_phone']);
-    self::setIfEmpty($Contact->work_phone, $contactData['work_phone']);
-    self::setIfEmpty($Contact->cell_phone, $contactData['cell_phone']);
-    self::setIfEmpty($Contact->fax, $contactData['fax']);
+    self::setIfEmpty($Contact, $contactData, 'first_name');
+    self::setIfEmpty($Contact, $contactData, 'middle_name');
+    self::setIfEmpty($Contact, $contactData, 'last_name');
+    self::setIfEmpty($Contact, $contactData, 'prefix_name');
+    self::setIfEmpty($Contact, $contactData, 'job_title');
+    self::setIfEmpty($Contact, $contactData, 'company_name');
+    self::setIfEmpty($Contact, $contactData, 'home_phone');
+    self::setIfEmpty($Contact, $contactData, 'work_phone');
+    self::setIfEmpty($Contact, $contactData, 'cell_phone');
+    self::setIfEmpty($Contact, $contactData, 'fax');
 
-    $Address = new Address();
-    $newAddress = $Address->create(array(
-      'line1' => $contactData['address_line_1'],
-      'line2' => $contactData['address_line_2'],
-      'line3' => $contactData['address_line_3'],
-      'city' => $contactData['city'],
-      'address_type' => "UNKNOWN",
-      'state_code' => $contactData['state_code'],
-      'country_code' => $contactData['country_code'],
-      'postal_code' => $contactData['postal_code'],
-      'sub_postal_code' => $contactData['sub_postal_code'],
-    ));
+    $addressLine1 = isset($contactData['address_line_1']) ? $contactData['address_line_1'] : "";
+    $addressLine2 = isset($contactData['address_line_2']) ? $contactData['address_line_2'] : "";
+    $addressLine3 = isset($contactData['address_line_3']) ? $contactData['address_line_3'] : "";
+
+    $city = isset($contactData['city']) ? $contactData['city'] : "";
+    $stateCode = isset($contactData['state_code']) ? $contactData['state_code'] : "";
+    $countryCode = isset($contactData['country_code']) ? $contactData['country_code'] : "";
+    $postalCode = isset($contactData['postal_code']) ? $contactData['postal_code'] : "";
+    $subPostalCode = isset($contactData['sub_postal_code']) ? $contactData['sub_postal_code'] : "";
+
 
     $CustomField = new CustomField();
     $cfPrefix = 'CustomField';
@@ -143,7 +141,23 @@ class CTCT_API_Wrapper
       }
     }
 
-    $Contact->addAddress($newAddress);
+    if ($addressLine1 || $city || $countryCode || $postalCode) {
+      $Address = new Address();
+      
+      $newAddress = $Address->create(array(
+        'line1' => $addressLine1,
+        'line2' => $addressLine2,
+        'line3' => $addressLine3,
+        'city' => $city,
+        'address_type' => "UNKNOWN",
+        'state_code' => $stateCode,
+        'country_code' => $countryCode,
+        'postal_code' => $postalCode,
+        'sub_postal_code' => $subPostalCode,
+      ));
+
+      $Contact->addAddress($newAddress);
+    }
 
     return true;
   }
